@@ -34,9 +34,13 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	boolean et = false;
 	boolean r = false;
 	
+	ArrayList prpark = new ArrayList(); // 교수님을 저장하기위한 배열
 	
+	proffessor pr; // 교수님 클래스의 접근자
 	
+	Image stdimg = new ImageIcon("학생.png").getImage();
 	Image background = new ImageIcon("강의실.png").getImage();
+	Image profimg = new ImageIcon("시공의교수님.jpg").getImage();
 	Image level1 = new ImageIcon("초급.jpg").getImage();
 	Image level2 = new ImageIcon("중급.png").getImage();
 	Image level3 = new ImageIcon("고급.jpg").getImage();
@@ -98,6 +102,8 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		} // 게임 난이도에 따라서 이미지를 나타냅니다.
 		if (mode != 0) {
 			backgroundDrawImg(); // 배경의 그림을 그린다
+			profDrawImg(); // 교수님의 그림을 그린다
+			stdDrawImg(); // 학생의 그림을 그린다
 			g.drawImage(buffimg, 0, 0, this); // 버퍼이미지를 그린다. 0,0으로 좌표를 맞춰서프레임크기에
 												// 딱맞춘다
 		}
@@ -106,8 +112,35 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	public void backgroundDrawImg() {
 		gc.drawImage(background, 0, 0, this); // 가져온 배경이미지파일을 0,0에 위치시킨다
 	}
-
-public void start() {
+	
+	public void stdDrawImg() {
+		
+		if (mode == 1) {
+			
+		} else if (mode == 2) {
+			
+		}
+		if (pause == true) {
+			gc.drawString("PAUSE", 340, 250); //일시정지 상태에서 PAUSE를 나타냅니다
+		}
+		MovestdImage(stdimg, x, y, 30, 30); // 캐릭터의 이미지를 좌표에 따라 그린다(루프가돌아가면서
+											// 계속다시그리므로 움직이는것처럼 보임),크기는 30x30
+	}
+	
+	public void profDrawImg() {
+		for (int i = 0; i < prpark.size(); ++i) {
+			pr = (proffessor) (prpark.get(i));
+			gc.drawImage(profimg, pr.position[0], pr.position[1], this);
+		}// 추가된 교수님의 수만큼 돌아다니는 시공의 그림을 추가한다.
+	}
+	
+	public void MovestdImage(Image stdimg, int x, int y, int width, int height) {
+		gc.setClip(x, y, width, height); // 캐릭터의이미지의 좌표와 크기를 받아온다
+		gc.drawImage(stdimg, x, y, this); // 캐릭터를 좌표에 따라 장소를 바꾸어 그린다.
+	}
+	
+	
+	public void start() {
 		Thread th = new Thread(this); // 쓰레드 를 정의
 		th.start(); // 쓰레드의 루프를 시작시킨다
 	}
@@ -182,9 +215,9 @@ public void start() {
 					if (pause == false) {
 						if (mode != 0) {
 							if (r == true) {
-							
+								reset(); //r을 누르면 리셋시킨다.
 							}
-							
+							profmove(); // 교수님을 추가/움직이게 함
 							cnt++; // 루프가 돌아간 횟수
 						}
 					}
@@ -256,7 +289,54 @@ public void start() {
 		}
 	}
 	
-public void modeandpause() {
+	
+	
+	public void profmove() {
+		//ghostmode();
+		for (int i = 0; i < prpark.size(); ++i) {
+			pr = (proffessor) (prpark.get(i)); // 시공을 추가시킨다.
+			pr.move(); // 교수님읭 움직임을 통제하는 메서드를 불러온다
+			int dis1 = (int) Math.pow((x + 10) - (pr.position[0] + 10), 2);
+			int dis2 = (int) Math.pow((y + 15) - (pr.position[1] + 15), 2);
+			double dist = Math.sqrt(dis1 + dis2); // 교수님과 학생의 거리를 재는 알고리즘
+			Random rand = new Random();
+			if (dist < 14) {
+				if (ghost == false) {
+					life--;
+					//gameover gg = new gameover((point * 10) * (cnt / 200)); // 거리가줄어들면게임오버
+					dispose(); // 게임프레임은 닫습니다
+				}
+			}
+		}
+		if ((cnt) % parkappear == 0) {
+			int[] r = GenerateXNY(); // 좌표를 랜덤으로 받아옵니다
+			pr = new proffessor(r[0], r[1]); // 받아온 좌표에 cnt/100의 시간이 지날때마다
+												// 교수님을추가시킵니다
+			prpark.add(pr);
+		}
+	}
+	
+	int[] GenerateXNY() { // 좌표를 랜덤으로 불러오는 메써드
+		Random rand = new Random();
+		int x_rand = (rand.nextInt() % 550) + 100;
+		x_rand = Math.abs(x_rand);
+		int y_rand = (rand.nextInt() % 400) + 150;
+		y_rand = Math.abs(y_rand);// x,y자표를 랜덤으로 받습니다
+		int x_rand2 = (int) Math.pow(x - x_rand, 2);
+		int y_rand2 = (int) Math.pow(y - y_rand, 2);
+		double dist = Math.sqrt(x_rand2 + y_rand2); // 캐릭터와 받아온 좌표의 거리를 구합니다
+		int[] res = new int[2];
+		if (dist > 200) {
+			res[0] = x_rand;
+			res[1] = y_rand;
+			return res; // 받아온 좌표가 캐릭터와 200거리 밖에 있다면, 좌표를 리턴시킵니다
+		} else {
+			return GenerateXNY(); // 좌표가 캐릭터와 200거리안에있다면, 다시 좌표를 정해 리턴시킵니다.
+		}
+	}
+	
+
+	public void modeandpause() {
 		if (mode == 0) {
 			if (et == true) {
 				mode = selectmode; //엔터를 누르면 해당모드를 적용시킨 후 게임이 시작됩니다
@@ -274,5 +354,93 @@ public void modeandpause() {
 			p = false;
 		}
 	}
+	
+	public void reset() { // 게임을 모두 초기상태로 돌립니다.
+		prpark.removeAll(prpark);
+		//paparray.removeAll(paparray);
+		//ghostarray.removeAll(ghostarray);
+		//point = 0;
+		mode = 0;
+		cnt = 0;
+		x = 400;
+		y = 300;
+	}
+	
+	
+	class proffessor { // 교수님의클래스
+		int position[] = new int[2]; // 교수님의 위치를 랜덤으로 받아오기 위한 변수
+		private int velosity; // 교수님의 이동속도를 조절하기 위한 변수
+		private int dst[] = new int[2]; // 교수님의 목적지를 정하기 위한 변수
+
+		proffessor(int x, int y) {
+			position[0] = x;
+			position[1] = y;
+			dst = GenerateXNY(); // 목적지를 랜덤으로 받아온다
+			Random rand = new Random();
+			velosity = (rand.nextInt() % 3) + 2; // 2와 4사이의 속도를 받아온다
+		}
+
+		int[] resetDst() { // 좌표를 다시 정해서 리턴시키는 메서드
+			int res[] = new int[2];
+			res = GenerateXNY();
+			return res;
+		}
+
+		int[] GenerateXNY() { // 좌표를 랜덤으로 리턴시키는 메서드
+			Random rand = new Random();
+			int x_rand = (rand.nextInt() % 650) + 100;
+			x_rand = Math.abs(x_rand);
+			int y_rand = (rand.nextInt() % 450) + 100;
+			y_rand = Math.abs(y_rand);
+			int[] res = new int[2];
+			res[0] = x_rand;
+			res[1] = y_rand;
+			return res;
+		}
+
+		public void move() { // 교수님의 움직임을 통제하기 위한 메서드
+			if (position[0] >= dst[0] && position[0] >= 0) {
+				position[0] = position[0] - velosity;
+			}
+			if (position[0] <= dst[0] && position[0] <= 800) {
+				position[0] = position[0] + velosity;
+			}
+
+			if (position[1] >= dst[1] && position[1] >= 0) {
+				position[1] = position[1] - velosity;
+			}
+			if (position[1] <= dst[1] && position[1] <= 600) {
+				position[1] = position[1] + velosity;
+			} // 교수님이 화면 밖으로 못벗어나는 범위 내에서 돌아다니게 만든다
+
+			if (position[0] > 800) {
+				dst = resetDst();
+			}
+			if (position[1] > 600) {
+				dst = resetDst();
+			}
+
+			if (position[0] < 0) {
+				dst = resetDst();
+			}
+			if (position[1] < 0) {
+				dst = resetDst();
+			} // 교수님이 만에하나 화면밖으로 넘어갔을 경우에 화면반대편으로 나오게하고, 목적지를 재설정한다
+			if (Math.abs(position[0] - dst[0]) <= velosity * 2) {
+				dst = resetDst();
+			}
+			if (Math.abs(position[1] - dst[1]) <= velosity * 2) {
+				dst = resetDst();
+			}
+			// 교수님이 목적지 근처에 도착하였을 경우 목적지를 재설정한다
+			if (position[0] > 800 || position[0] < velosity) {
+				dst = resetDst();
+			}
+			if (position[1] > 600 || position[1] < velosity) {
+				dst = resetDst();
+			}// 교수님이 화면밖으로 넘어갈 경우 목적지를 재설정한다
+		}
+	}
+	
 }
 
