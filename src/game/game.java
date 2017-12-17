@@ -82,6 +82,8 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	int parkappear = 0;
 	boolean pause = false;
 	boolean ghost = false;
+	Music introMusic = new Music("introMusic.mp3", true);
+	Music gameMusic = new Music("gameMusic.mp3", true);
 	
 	Shooting_Frame() {
 		setTitle("SiGong Joa");
@@ -90,6 +92,10 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		setLocation(250, 80);
 		setResizable(false); // 사이즈를 조절할 수 없게 만듬
 		setVisible(true); // 프레임을 보이게 만듬
+		
+		introMusic.start();
+		
+		
 		this.addKeyListener(this); // 키리스너를 추가하여 방향키 정보를 받아올 수 있게 한다.
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -206,6 +212,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			paparray.add(pa); // cnt/40의 시간이 지날때마다 하나의 컨닝페이퍼를 화면에 추가한다
 			if (paparray.size() > 5) {
 				life--;
+				gameMusic.close();
 				gameover gg = new gameover((cnt) / 4 * point); // 점수를 넘겨 게임오버 프레임을 엽니다
 				dispose(); // 게임은 닫습니다
 			} // 아이템을안먹고 피하기만하면 점수얻기가 쉽기때문에 누적 아이템갯수가 5개가 넘어가면 죽습니다
@@ -435,6 +442,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			if (dist < 14) {
 				if (ghost == false) {
 					life--;
+					gameMusic.close();
 					gameover gg = new gameover((point * 10) * (cnt / 200)); // 거리가줄어들면게임오버
 					dispose(); // 게임프레임은 닫습니다
 				}
@@ -472,8 +480,8 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		if (mode == 0) {
 			if (et == true) {
 				mode = selectmode; //엔터를 누르면 해당모드를 적용시킨 후 게임이 시작됩니다
-				Music introMusic = new Music("introMusic.mp3", true);
-				introMusic.start();
+				introMusic.close();
+				gameMusic.start();
 			}
 			if (mode == 1) { // 초급에서 사용되는 아이템들입니다.
 				ghostnum = 2;
@@ -671,6 +679,7 @@ class gameover extends JFrame implements ActionListener {
 	
 	ImageIcon img = new ImageIcon("시공조아.png");
 	JLabel lb = new JLabel(img);
+	Music endMusic = new Music("endMusic.mp3", false);
 	
 	gameover(int p) {
 		lb.setSize(400,250);
@@ -692,6 +701,8 @@ class gameover extends JFrame implements ActionListener {
 		add(tf);
 		add(restart);
 		
+		endMusic.start();
+		
 		ini = "스코어  " + p;
 		score.setText(ini);
 		score.setFont(getFont());
@@ -709,16 +720,65 @@ class gameover extends JFrame implements ActionListener {
 		
 	}
 	
+public class Music extends Thread {
+		
+		private Player player;
+		private boolean isLoop;
+		private File file;
+		private FileInputStream fis;
+		private BufferedInputStream bis;
+		
+		public Music(String name, boolean isLoop) {
+			try {
+				this.isLoop = isLoop;
+				file = new File(Shooting_Frame.class.getResource("../music/" + name). toURI());
+				fis = new FileInputStream(file);
+				bis = new BufferedInputStream(fis);
+				player = new Player(bis);
+				
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+		}
+		
+		public int getTime() {
+			if (player == null)
+				return 0;
+			return player.getPosition();
+		}
+		
+		public void close() { // 음악을 종료하는 함수
+			isLoop = false;
+			player.close();
+			this.interrupt();
+		}
+		@Override
+		public void run() {
+			try {
+				do {
+					player.play();
+					fis = new FileInputStream(file);
+					bis = new BufferedInputStream(fis);
+					player = new Player(bis);
+				} while(isLoop);
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+		}
+
+	}
+	
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals("입력")) {
-			score.setText(ini + " - U fall in HOS " + tf.getText());
+			score.setText(ini + " - You fall in HOS " + tf.getText());
 
 		}
 		if (e.getActionCommand().equals("재시작")) {
-
+			endMusic.close();
 			Shooting_Frame rg = new Shooting_Frame();
 			dispose();
 			setVisible(false);
+			
 		}
 	}
 }
