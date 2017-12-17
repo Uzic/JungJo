@@ -37,12 +37,15 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	boolean r = false;
 	
 	ArrayList prpark = new ArrayList(); // 교수님을 저장하기위한 배열
-	ArrayList paparray = new ArrayList(); // 족의 오브젝트를 여러개 저장히기 위한 배열
+	ArrayList paparray = new ArrayList(); // 족보의 오브젝트를 여러개 저장히기 위한 배열
+	ArrayList ghostarray = new ArrayList(); // 교수님의 오브젝트를 여러개 저장히기 위한 배열
 	
 	proffessor pr; // 교수님 클래스의 접근자
 	pap pa; // 컨닝페이퍼 클래스의 접근자
+	ghostc gh;
 	
 	Image stdimg = new ImageIcon("학생.png").getImage();
+	Image ghostimg = new ImageIcon("고스트.png").getImage();
 	Image background = new ImageIcon("강의실.png").getImage();
 	Image profimg = new ImageIcon("시공의교수님.jpg").getImage();
 	Image papimg = new ImageIcon("컨닝페이퍼.png").getImage();
@@ -54,6 +57,8 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	
 	int x = 400, y = 300; // 캐릭터의 시작 위치, 그리고 앞으로의 좌표를 받아오기 위한 변수
 	int cnt = 0; // 쓰레드의 루프를 세는 변수, 각종 변수를 통제하기 위해 사용된다
+	int ghostnum = 0;
+	int ghosttime = 0;
 	int mode = 0;
 	int selectmode = 1;
 	int life = 0; // 목숨
@@ -109,7 +114,8 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		if (mode != 0) {
 			backgroundDrawImg(); // 배경의 그림을 그린다
 			profDrawImg(); // 교수님의 그림을 그린다
-			papDrawImg(); // 컨닝페이퍼의 그림을 그린다z
+			papDrawImg(); // 컨닝페이퍼의 그림을 그린다
+			ghostDrawImg(); // 고스트아이템을 그린다
 			stdDrawImg(); // 학생의 그림을 그린다
 			g.drawImage(buffimg, 0, 0, this); // 버퍼이미지를 그린다. 0,0으로 좌표를 맞춰서프레임크기에
 												// 딱맞춘다
@@ -148,6 +154,13 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		}// 추가된 컨닝페이퍼의 수만큼 컨닝페이퍼의 이미지를 추가한다
 	}
 	
+	public void ghostDrawImg() {
+		for (int i = 0; i < ghostarray.size(); ++i) {
+			gh = (ghostc) (ghostarray.get(i));
+			gc.drawImage(ghostimg, gh.position[0], gh.position[1], this);
+		}// 추가된 고스트아이템의 수만큼 아이템의 이미지를 추가한다
+	}
+	
 	public void MovestdImage(Image stdimg, int x, int y, int width, int height) {
 		gc.setClip(x, y, width, height); // 캐릭터의이미지의 좌표와 크기를 받아온다
 		gc.drawImage(stdimg, x, y, this); // 캐릭터를 좌표에 따라 장소를 바꾸어 그린다.
@@ -176,6 +189,42 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		}
 	}
 	
+	public void ghostmove() {
+		if (mode == 1) {
+			for (int i = 0; i < ghostarray.size(); ++i) {
+				gh = (ghostc) (ghostarray.get(i)); // 폭탄을 추가한다
+				int dis1 = (int) Math.pow((x + 10) - (gh.position[0] + 10), 2);
+				int dis2 = (int) Math.pow((y + 15) - (gh.position[1] + 15), 2);
+				double dist = Math.sqrt(dis1 + dis2); // 캐릭터와 폭탄의 거리를 구하는 알고리즘
+				if (dist < 25) {
+					ghostnum++;
+					ghostarray.remove(i); //고스트아이템에 가까워지면 고스트아이템이 사라지고 소지갯수가 늘어납니다
+				}
+			}
+			if ((cnt) % 800 == 0) {
+				int[] r = GenerateXNY(); // 랜덤으로 좌표를 받아온다
+				gh = new ghostc(r[0], r[1]); // 받아온 좌표에 컨닝페이퍼를 추가시킨다.
+				ghostarray.add(gh); // cnt/40의 시간이 지날때마다 하나의 컨닝페이퍼를 화면에 추가한다
+			}
+		}
+	}
+
+	public void ghostmode(int a) {
+		ghosttime = a;
+		ghost = true; // 고스트를 호라성화시킵니다,
+		ghostnum--; // 고스트모드가 켜지면 소지갯수가 줄어듭니다. 
+	}
+
+	public void ghostmode() {
+		shift = false;
+		if (ghosttime > 0) {
+			ghosttime--; //고스트타임이 점점줄어듭니다
+			if (ghosttime <= 0) {
+				ghost = false; //고스트시간이 다되면 고스트모드를 종료합니다
+			}
+		}
+	}
+	
 	public void start() {
 		Thread th = new Thread(this); // 쓰레드 를 정의
 		th.start(); // 쓰레드의 루프를 시작시킨다
@@ -197,7 +246,13 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		} else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
 			if (mode != 3) {
 				space = true;
-			} //고급모드에서는 부스터가 사용되지않으므로
+		} //고급모드에서는 부스터가 사용되지않으므로
+		}
+		else if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+			if (ghostnum > 0) {
+				ghostmode(200);
+			}// 고스트게이지를 200부터시작시킵니다.
+				shift = true;
 		} else if (e.getKeyCode() == KeyEvent.VK_P) {
 			p = true;
 		} else if (e.getKeyCode() == KeyEvent.VK_R) {
@@ -255,6 +310,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 							}
 							profmove(); // 교수님을 추가/움직이게 함
 							papmove(); // 컨닝페이퍼의 추가메써드
+							ghostmove();
 							cnt++; // 루프가 돌아간 횟수
 						}
 					}
@@ -329,7 +385,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	
 	
 	public void profmove() {
-		//ghostmode();
+		ghostmode();
 		for (int i = 0; i < prpark.size(); ++i) {
 			pr = (proffessor) (prpark.get(i)); // 시공을 추가시킨다.
 			pr.move(); // 교수님읭 움직임을 통제하는 메서드를 불러온다
@@ -379,10 +435,13 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 				mode = selectmode; //엔터를 누르면 해당모드를 적용시킨 후 게임이 시작됩니다
 			}
 			if (mode == 1) { // 초급에서 사용되는 아이템들입니다.
+				ghostnum = 2;
 				parkappear = 80; // 초급에서는 교수님의 생성 주기가깁니다
 			} else if (mode == 2) {
+				ghostnum = 0;
 				parkappear = 65; 
 			} else if (mode == 3) {
+				ghostnum = 0;
 				parkappear = 40; //고급에서는 교수님의 생성 주기가 짧습니다
 			}
 		}
@@ -394,9 +453,9 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	
 	public void reset() { // 게임을 모두 초기상태로 돌립니다.
 		prpark.removeAll(prpark);
-		//paparray.removeAll(paparray);
-		//ghostarray.removeAll(ghostarray);
-		//point = 0;
+		paparray.removeAll(paparray);
+		ghostarray.removeAll(ghostarray);
+		point = 0;
 		mode = 0;
 		cnt = 0;
 		x = 400;
@@ -485,6 +544,27 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		pap(int x, int y) {
 			position[0] = x;
 			position[1] = y;
+		}
+	}
+	
+	class ghostc { // 고스트아이템의 클래스
+		int position[] = new int[2]; // 고스트 아이템의 출현 위치를 정하기 위한 변수
+
+		ghostc(int x, int y) {
+			position[0] = x;
+			position[1] = y;
+		}
+
+		int[] GenerateXNY() { // 좌표를 랜덤으로 받아오는 메서드
+			Random rand = new Random();
+			int x_rand = (rand.nextInt() % 650) + 100;
+			x_rand = Math.abs(x_rand);
+			int y_rand = (rand.nextInt() % 450) + 100;
+			y_rand = Math.abs(y_rand);
+			int[] res = new int[2];
+			res[0] = x_rand;
+			res[1] = y_rand;
+			return res;
 		}
 	}
 }
