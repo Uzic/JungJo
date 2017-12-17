@@ -1,4 +1,3 @@
-
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
@@ -63,6 +62,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	int selectmode = 1;
 	int life = 0; // 목숨
 	int point = 0;
+	int boost = 40;
 	int parkappear = 0;
 	boolean pause = false;
 	boolean ghost = false;
@@ -311,6 +311,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 							profmove(); // 교수님을 추가/움직이게 함
 							papmove(); // 컨닝페이퍼의 추가메써드
 							ghostmove();
+							boostcontrol();
 							cnt++; // 루프가 돌아간 횟수
 						}
 					}
@@ -319,6 +320,21 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			}
 	}
 	
+	public void boostcontrol() {
+		if (space == false) { // 부스터 게이지를 통제하기 위한 if문
+			if (boost < 40) {
+				if (cnt % 20 == 0) {
+					boost++; //부스터게이지가 space를 떼고있을때는 천천히 충전됩니다
+				}
+			}
+		} else {
+			if (boost > 0) {
+				boost--; //space를 누르면 부스터게이지가 줄어듭니다
+			} else {
+				space = false;
+			}
+		}
+	}
 	
 	
 	
