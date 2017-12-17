@@ -1,11 +1,14 @@
-
 package game;
 
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Label;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -19,9 +22,13 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 
 import javazoom.jl.player.Player;
-import sun.applet.Main;
+
+
+
 
 
 
@@ -71,23 +78,18 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	int selectmode = 1;
 	int life = 0; // 목숨
 	int point = 0;
-	int boost = 40;
+	int boost = 80;
 	int parkappear = 0;
 	boolean pause = false;
 	boolean ghost = false;
 	
-	
 	Shooting_Frame() {
 		setTitle("SiGong Joa");
-		setSize(800, 600);
+		setSize(800, 620);
 		start(); // 쓰레드의 루프를 시작하기 위한 메써드
 		setLocation(250, 80);
 		setResizable(false); // 사이즈를 조절할 수 없게 만듬
 		setVisible(true); // 프레임을 보이게 만듬
-		
-		
-		
-		
 		this.addKeyListener(this); // 키리스너를 추가하여 방향키 정보를 받아올 수 있게 한다.
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -96,7 +98,6 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 				System.exit(0);
 			}
 		});
-		
 	}
 	
 	
@@ -118,13 +119,13 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		if (mode == 0) {
 			setBackground(Color.BLACK);
 			if (selectmode == 1) {
-				gc.drawImage(level1, 0,10, this);
+				gc.drawImage(level1, 0, 20, this);
 			} else if (selectmode == 2) {
-				gc.drawImage(level2, 0, 10, this);
+				gc.drawImage(level2, 0, 20, this);
 			} else if (selectmode == 3) {
-				gc.drawImage(level3, 0, 10, this);
+				gc.drawImage(level3, 0, 20, this);
 			}
-			g.drawImage(buffimg, 0, 0, this);
+			g.drawImage(buffimg, 0, 20, this);
 		} // 게임 난이도에 따라서 이미지를 나타냅니다.
 		if (mode != 0) {
 			backgroundDrawImg(); // 배경의 그림을 그린다
@@ -132,24 +133,31 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			papDrawImg(); // 컨닝페이퍼의 그림을 그린다
 			ghostDrawImg(); // 고스트아이템을 그린다
 			stdDrawImg(); // 학생의 그림을 그린다
-			g.drawImage(buffimg, 0, 0, this); // 버퍼이미지를 그린다. 0,0으로 좌표를 맞춰서프레임크기에
+			g.drawImage(buffimg, 0, 20, this); // 버퍼이미지를 그린다. 0,0으로 좌표를 맞춰서프레임크기에
 												// 딱맞춘다
 		}
 	}
 	
 	public void backgroundDrawImg() {
-		gc.drawImage(background, 0, 0, this); // 가져온 배경이미지파일을 0,0에 위치시킨다
+		gc.drawImage(background, 0, 20, this); // 가져온 배경이미지파일을 0,0에 위치시킨다
 	}
 	
 	public void stdDrawImg() {
+		gc.setFont(new Font("Default" ,Font.BOLD, 20)); // 폰트의모양과크기를정나다
+		gc.setColor(new Color(255, 228, 0)); //폰트의 색
+		gc.drawString("아이템수 :" + Integer.toString(paparray.size()), 400, 20); // 나와있는 아이템의 수를 나타냄
+		gc.drawString("버틴시간:" + Integer.toString(cnt / 40), 530, 20); // 루프속도의1/40만큼시간이흘러감
+		gc.drawString("컨닝페이퍼:" + Integer.toString(point), 650, 20); // 먹은아이템의갯수를나타낸다
 		
 		if (mode == 1) {
-			
+			gc.drawString("고스트:" + Integer.toString(ghostnum), 50, 20); // 소지한 고스트아이템 갯수
+			gc.drawString("무적시간 :" + Integer.toString(ghosttime), 650, 40); // 고스트 시간
+			gc.drawString("부스터 게이지 :" + Integer.toString(boost), 150, 20); // 부스터를 쓸 수 있는 게이지
 		} else if (mode == 2) {
-			
+			gc.drawString("부스터 게이지 :" + Integer.toString(boost), 150, 20); // 중급에서는 고스트와 무적시간은 표시되지 않습니다
 		}
 		if (pause == true) {
-			gc.drawString("PAUSE", 340, 250); //일시정지 상태에서 PAUSE를 나타냅니다
+			gc.drawString("PAUSE", 360, 270); //일시정지 상태에서 PAUSE를 나타냅니다
 		}
 		MovestdImage(stdimg, x, y, 30, 30); // 캐릭터의 이미지를 좌표에 따라 그린다(루프가돌아가면서
 											// 계속다시그리므로 움직이는것처럼 보임),크기는 30x30
@@ -198,7 +206,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			paparray.add(pa); // cnt/40의 시간이 지날때마다 하나의 컨닝페이퍼를 화면에 추가한다
 			if (paparray.size() > 5) {
 				life--;
-				//gameover gg = new gameover((cnt) / 4 * point); // 점수를 넘겨 게임오버 프레임을 엽니다
+				gameover gg = new gameover((cnt) / 4 * point); // 점수를 넘겨 게임오버 프레임을 엽니다
 				dispose(); // 게임은 닫습니다
 			} // 아이템을안먹고 피하기만하면 점수얻기가 쉽기때문에 누적 아이템갯수가 5개가 넘어가면 죽습니다
 		}
@@ -372,7 +380,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			}
 		} else {
 			if (keyUp == true && pause == false) {
-				if (y > 0) {
+				if (y > 20) {
 					if (space == false) {
 						y -= 8;
 					} else {
@@ -427,7 +435,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			if (dist < 14) {
 				if (ghost == false) {
 					life--;
-					//gameover gg = new gameover((point * 10) * (cnt / 200)); // 거리가줄어들면게임오버
+					gameover gg = new gameover((point * 10) * (cnt / 200)); // 거리가줄어들면게임오버
 					dispose(); // 게임프레임은 닫습니다
 				}
 			}
@@ -538,14 +546,14 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			if (position[1] >= dst[1] && position[1] >= 0) {
 				position[1] = position[1] - velosity;
 			}
-			if (position[1] <= dst[1] && position[1] <= 600) {
+			if (position[1] <= dst[1] && position[1] <= 550) {
 				position[1] = position[1] + velosity;
 			} // 교수님이 화면 밖으로 못벗어나는 범위 내에서 돌아다니게 만든다
 
 			if (position[0] > 800) {
 				dst = resetDst();
 			}
-			if (position[1] > 600) {
+			if (position[1] > 550) {
 				dst = resetDst();
 			}
 
@@ -565,7 +573,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 			if (position[0] > 800 || position[0] < velosity) {
 				dst = resetDst();
 			}
-			if (position[1] > 600 || position[1] < velosity) {
+			if (position[1] > 550 || position[1] < velosity) {
 				dst = resetDst();
 			}// 교수님이 화면밖으로 넘어갈 경우 목적지를 재설정한다
 		}
@@ -649,4 +657,69 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 
 	}
 
+	
+	
+	
 }
+class gameover extends JFrame implements ActionListener {
+
+	Label score = new Label();
+	Button insert = new Button("입력");
+	Button restart = new Button("재시작");
+	TextField tf = new TextField();
+	String ini = "";
+	
+	ImageIcon img = new ImageIcon("시공조아.png");
+	JLabel lb = new JLabel(img);
+	
+	gameover(int p) {
+		lb.setSize(400,250);
+		lb.setLocation(0,0);
+		score.setSize(400,50);
+		score.setLocation(0,250);
+		tf.setSize(400,50);
+		tf.setLocation(0,300);
+		insert.setSize(200,50);
+		insert.setLocation(0,350);
+		restart.setSize(200,50);
+		restart.setLocation(200,350);
+		setLocation(250, 80);
+		setResizable(false);
+		setBackground(Color.WHITE);
+		add(lb);
+		add(score);
+		add(insert);
+		add(tf);
+		add(restart);
+		
+		ini = "스코어  " + p;
+		score.setText(ini);
+		score.setFont(getFont());
+		setLayout(null);
+		insert.addActionListener(this);
+		restart.addActionListener(this);
+		setSize(400, 420);
+		setVisible(true);
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+		
+		
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+		if (e.getActionCommand().equals("입력")) {
+			score.setText(ini + " - U fall in HOS " + tf.getText());
+
+		}
+		if (e.getActionCommand().equals("재시작")) {
+
+			Shooting_Frame rg = new Shooting_Frame();
+			dispose();
+			setVisible(false);
+		}
+	}
+}
+
