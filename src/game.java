@@ -1,3 +1,4 @@
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.ImageIcon;
+
 
 
 public class game {
@@ -35,12 +37,15 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	boolean r = false;
 	
 	ArrayList prpark = new ArrayList(); // 교수님을 저장하기위한 배열
+	ArrayList paparray = new ArrayList(); // 족의 오브젝트를 여러개 저장히기 위한 배열
 	
 	proffessor pr; // 교수님 클래스의 접근자
+	pap pa; // 컨닝페이퍼 클래스의 접근자
 	
 	Image stdimg = new ImageIcon("학생.png").getImage();
 	Image background = new ImageIcon("강의실.png").getImage();
 	Image profimg = new ImageIcon("시공의교수님.jpg").getImage();
+	Image papimg = new ImageIcon("컨닝페이퍼.png").getImage();
 	Image level1 = new ImageIcon("초급.jpg").getImage();
 	Image level2 = new ImageIcon("중급.png").getImage();
 	Image level3 = new ImageIcon("고급.jpg").getImage();
@@ -52,6 +57,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 	int mode = 0;
 	int selectmode = 1;
 	int life = 0; // 목숨
+	int point = 0;
 	int parkappear = 0;
 	boolean pause = false;
 	boolean ghost = false;
@@ -103,6 +109,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		if (mode != 0) {
 			backgroundDrawImg(); // 배경의 그림을 그린다
 			profDrawImg(); // 교수님의 그림을 그린다
+			papDrawImg(); // 컨닝페이퍼의 그림을 그린다z
 			stdDrawImg(); // 학생의 그림을 그린다
 			g.drawImage(buffimg, 0, 0, this); // 버퍼이미지를 그린다. 0,0으로 좌표를 맞춰서프레임크기에
 												// 딱맞춘다
@@ -134,11 +141,40 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		}// 추가된 교수님의 수만큼 돌아다니는 시공의 그림을 추가한다.
 	}
 	
+	public void papDrawImg() {
+		for (int i = 0; i < paparray.size(); ++i) {
+			pa = (pap) (paparray.get(i));
+			gc.drawImage(papimg, pa.position[0], pa.position[1], this);
+		}// 추가된 컨닝페이퍼의 수만큼 컨닝페이퍼의 이미지를 추가한다
+	}
+	
 	public void MovestdImage(Image stdimg, int x, int y, int width, int height) {
 		gc.setClip(x, y, width, height); // 캐릭터의이미지의 좌표와 크기를 받아온다
 		gc.drawImage(stdimg, x, y, this); // 캐릭터를 좌표에 따라 장소를 바꾸어 그린다.
 	}
 	
+	public void papmove() {
+		for (int i = 0; i < paparray.size(); ++i) {
+			pa = (pap) (paparray.get(i)); // 컨닝페이퍼를 추가한다
+			int dis1 = (int) Math.pow((x + 10) - (pa.position[0] + 10), 2);
+			int dis2 = (int) Math.pow((y + 15) - (pa.position[1] + 15), 2);
+			double dist = Math.sqrt(dis1 + dis2); // 캐릭터와 컨닝페이퍼의 거리를 구하는 알고리즘
+			if (dist < 25) {
+				point++;
+				paparray.remove(i); // 거리가 20이하로 줄어들게되면 컨닝페이퍼가 사라지고 점수가 오르게 된다.
+			}
+		}
+		if ((cnt) % 60 == 0) {
+			int[] r = GenerateXNY(); // 랜덤으로 좌표를 받아온다
+			pa = new pap(r[0], r[1]); // 받아온 좌표에 컨닝페이퍼를 추가시킨다.
+			paparray.add(pa); // cnt/40의 시간이 지날때마다 하나의 컨닝페이퍼를 화면에 추가한다
+			if (paparray.size() > 5) {
+				life--;
+				//gameover gg = new gameover((cnt) / 4 * point); // 점수를 넘겨 게임오버 프레임을 엽니다
+				dispose(); // 게임은 닫습니다
+			} // 아이템을안먹고 피하기만하면 점수얻기가 쉽기때문에 누적 아이템갯수가 5개가 넘어가면 죽습니다
+		}
+	}
 	
 	public void start() {
 		Thread th = new Thread(this); // 쓰레드 를 정의
@@ -218,6 +254,7 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 								reset(); //r을 누르면 리셋시킨다.
 							}
 							profmove(); // 교수님을 추가/움직이게 함
+							papmove(); // 컨닝페이퍼의 추가메써드
 							cnt++; // 루프가 돌아간 횟수
 						}
 					}
@@ -442,5 +479,12 @@ class Shooting_Frame extends Frame implements Runnable, KeyListener {
 		}
 	}
 	
-}
+	class pap { // 컨닝페이퍼의 클래스
+		int position[] = new int[2]; // 컨닝페이퍼의 출현 위치를 정하기 위한 변수
 
+		pap(int x, int y) {
+			position[0] = x;
+			position[1] = y;
+		}
+	}
+}
